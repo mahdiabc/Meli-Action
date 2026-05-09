@@ -167,7 +167,10 @@ jobs:
             mv -- "$FILENAME" ..     # ← این خط اصلاح شد
           fi
           cd ..
-
+      - name: 📅 Get Current Date
+        id: get_date
+        run: echo "date=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+        
       - name: 📤 Push to Repository
         if: github.event.inputs.upload_method == 'repository (push to repo)'
         run: |
@@ -181,28 +184,30 @@ jobs:
           git commit -m "⬇️ YouTube: ${{ steps.retrieve.outputs.filename }} [skip ci]" || echo "Nothing to commit"
           git push
 
-      - name: 📤 Upload to GitHub Releases
+           - name: 📤 Upload to GitHub Releases
         if: github.event.inputs.upload_method == 'release (GitHub Releases)'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag || format('yt-{0}', github.run_number) }}
           name: ${{ format('YouTube - {0}', steps.retrieve.outputs.filename) }}
           body: |
-            **دانلود از یوتیوب**
+            **📽️ دانلود از یوتیوب**
 
             **عنوان:** ${{ steps.retrieve.outputs.title }}
             **لینک ویدیو:** ${{ github.event.inputs.video_url }}
             **کیفیت:** ${{ github.event.inputs.desired_quality }}
-            **تاریخ:** $(date '+%Y-%m-%d %H:%M:%S')
+            **فرمت:** ${{ github.event.inputs.output_format }}
+            **تاریخ دانلود:** ${{ steps.get_date.outputs.date }}
 
-            Powered by Meli-Action
+            ---
+            Powered by Meli-Action ⚡
           files: |
             temp_dl/*
             *.zip
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: false
-
+          
       - name: 🧹 Cleanup
         if: always()
         run: rm -rf temp_dl .download_info *.zip 2>/dev/null || true
